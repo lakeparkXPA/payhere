@@ -86,11 +86,11 @@ DATABASE_PORT = key['DATABASE_PORT']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'payhere',
-        'USER': ,
-        'PASSWORD': ,
-        'HOST': ,
-        'PORT': ,
+        'NAME': DATABASE_NAME,
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': DATABASE_PORT,
 
     }
 }
