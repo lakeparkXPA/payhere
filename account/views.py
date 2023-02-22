@@ -9,7 +9,6 @@ from drf_yasg import openapi
 
 from account.models import User, Abook
 
-from account.serializers import UserLogin
 from payhere import error_collection
 from tools import make_token
 
@@ -75,11 +74,9 @@ def register(request):
         user = User()
         user.email = email
 
-        user.password = bcrypt.hashpw(password1.encode('utf-8'), bcrypt.gensalt())
+        user.password = bcrypt.hashpw(password1.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         user.register_date = datetime.datetime.utcnow()
-
-        user.save()
 
         token = {'token': make_token(user.pk), 'refresh_token': make_token(user.pk, auth='refresh', hours=6)}
 
@@ -88,11 +85,8 @@ def register(request):
 
         return Response(token, status=HTTP_201_CREATED)
     except Exception as e:
-        try:
-            user.delete()
-        except:
-            pass
         return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
+
 
 
 @swagger_auto_schema(
@@ -107,14 +101,11 @@ def register(request):
             'password': openapi.Schema(
                 type=openapi.TYPE_STRING,
                 description='Password'),
-            'push_token': openapi.Schema(
-                type=openapi.TYPE_STRING,
-                description='Push token'),
         },
         required=['email', 'password'],
     ),
     responses={
-        HTTP_202_ACCEPTED: '\n\n> **로그인, 토큰 반환**\n\n```\n{\n\n\t"basic_info":True\n\t"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0",\n\t"refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0"\n\n}\n\n```',
+        HTTP_202_ACCEPTED: '\n\n> **로그인, 토큰 반환**\n\n```\n{\n\n\t"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0",\n\t"refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0"\n\n}\n\n```',
         HTTP_400_BAD_REQUEST: error_collection.RAISE_400_EMAIL_FORMAT_INVALID.as_md() +
                               error_collection.RAISE_400_WRONG_PASSWORD.as_md() +
                               error_collection.RAISE_400_WRONG_EMAIL.as_md(),
@@ -122,32 +113,29 @@ def register(request):
 )
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
-def patient_login(request):
+def login(request):
     email = request.data['email']
     password = request.data['password']
-    login_obj = User.objects.filter(email=email)
 
     try:
         try:
             validate_email(email)
         except:
             raise ValueError('email_format')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise ValueError('wrong_email')
         else:
-            db_pass = login_obj.get().password
 
-            if db_pass != password:
+            db_pass = user.password
+            if not bcrypt.checkpw(password.encode('utf-8'), db_pass.encode('utf-8')):
                 raise ValueError('wrong_password')
             else:
+                token = {'token': make_token(user.pk), 'refresh_token': make_token(user.pk, auth='refresh', hours=6)}
 
-                token = UserLogin(login_obj, many=True).data[0]
-
-                try:
-                    p_user = User.objects.get(email=email)
-                except User.DoesNotExist:
-                    raise ValueError('wrong_email')
-
-                p_user.refresh_token = token['refresh_token'].decode()
-                p_user.save()
+                user.refresh_token = token['refresh_token'].decode()
+                user.save()
 
                 return Response(token, status=HTTP_202_ACCEPTED)
 
