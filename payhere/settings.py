@@ -20,15 +20,14 @@ key_file = os.path.join(BASE_DIR, 'key.json')
 
 with open(key_file) as f:
     key = json.loads(f.read())
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+
+
 SECRET_KEY = key['SECRET_KEY']
 ALGORITHM = key['ALGORITHM']
 ALLOWED_HOSTS = key['ALLOWED_HOSTS']
 
-# SECURITY WARNING: don't run with debug turned on in production!
+
 DEBUG = True
 
 
@@ -42,8 +41,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',
+    'account.apps.AccountConfig',
+    'drf_yasg',
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'content-type',
+    'X-CSRFToken',
+    'token',
+
+]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -52,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'payhere.urls'
@@ -92,6 +106,10 @@ DATABASES = {
         'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
 
+    },
+    'TEST': {
+        'CHARSET': 'utf8',
+        'COALATION': 'utf8-unicode-ci',
     }
 }
 
