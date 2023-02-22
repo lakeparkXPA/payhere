@@ -38,10 +38,16 @@ RAISE_400_WRONG_PASSWORD = ErrorCollection(
 RAISE_400_PASSWORD_MISSING = ErrorCollection(
     code='password_missing',
     status=status.HTTP_400_BAD_REQUEST,
-    message='비밀번호기 존재하지 않습니다.'
+    message='비밀번호기 존재하지 않습니.'
 )
 RAISE_400_PASSWORD_NOT_SAME = ErrorCollection(
     code='password_not_same',
     status=status.HTTP_400_BAD_REQUEST,
     message='두 비밀번호가 다릅니다.'
+)
+
+RAISE_400_WRONG_EMAIL = ErrorCollection(
+    code='wrong_email',
+    status=status.HTTP_400_BAD_REQUEST,
+    message='이메일이 틀렸습니다.'
 )

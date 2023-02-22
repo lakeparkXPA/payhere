@@ -3,7 +3,7 @@ from django.core.validators import validate_email
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_200_OK, HTTP_202_ACCEPTED
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -11,6 +11,7 @@ from account.models import User, Abook
 
 from account.serializers import UserLogin
 from payhere import error_collection
+from tools import make_token
 
 import datetime
 import bcrypt
@@ -80,12 +81,75 @@ def register(request):
 
         user.save()
 
-        login_obj = User.objects.filter(email=email)
-        token = UserLogin(login_obj, many=True).data[0]
+        token = {'token': make_token(user.pk), 'refresh_token': make_token(user.pk, auth='refresh', hours=6)}
 
         user.refresh_token = token['refresh_token'].decode()
         user.save()
 
         return Response(token, status=HTTP_201_CREATED)
+    except Exception as e:
+        try:
+            user.delete()
+        except:
+            pass
+        return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(
+    operation_description='Return an auth-token for the user account.',
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'email': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description='Email'),
+            'password': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description='Password'),
+            'push_token': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description='Push token'),
+        },
+        required=['email', 'password'],
+    ),
+    responses={
+        HTTP_202_ACCEPTED: '\n\n> **로그인, 토큰 반환**\n\n```\n{\n\n\t"basic_info":True\n\t"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0",\n\t"refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0"\n\n}\n\n```',
+        HTTP_400_BAD_REQUEST: error_collection.RAISE_400_EMAIL_FORMAT_INVALID.as_md() +
+                              error_collection.RAISE_400_WRONG_PASSWORD.as_md() +
+                              error_collection.RAISE_400_WRONG_EMAIL.as_md(),
+    },
+)
+@api_view(['POST'])
+@permission_classes((permissions.AllowAny,))
+def patient_login(request):
+    email = request.data['email']
+    password = request.data['password']
+    login_obj = User.objects.filter(email=email)
+
+    try:
+        try:
+            validate_email(email)
+        except:
+            raise ValueError('email_format')
+        else:
+            db_pass = login_obj.get().password
+
+            if db_pass != password:
+                raise ValueError('wrong_password')
+            else:
+
+                token = UserLogin(login_obj, many=True).data[0]
+
+                try:
+                    p_user = User.objects.get(email=email)
+                except User.DoesNotExist:
+                    raise ValueError('wrong_email')
+
+                p_user.refresh_token = token['refresh_token'].decode()
+                p_user.save()
+
+                return Response(token, status=HTTP_202_ACCEPTED)
+
     except Exception as e:
         return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
