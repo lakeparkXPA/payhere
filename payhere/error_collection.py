@@ -51,3 +51,8 @@ RAISE_400_WRONG_EMAIL = ErrorCollection(
     status=status.HTTP_400_BAD_REQUEST,
     message='이메일이 틀렸습니다.'
 )
+RAISE_403_TOKEN_EXPIRE = ErrorCollection(
+    code='token_expire',
+    status=status.HTTP_403_FORBIDDEN,
+    message='토큰이 만료됐습니다.'
+)

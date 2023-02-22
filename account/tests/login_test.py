@@ -5,9 +5,11 @@ from django.urls import reverse
 from account.models import User
 import bcrypt
 
+
 class LoginTestCase(APITestCase):
     def setUp(self):
         self.url = reverse('user_login')
+        self.url2 = reverse('user_logout')
         self.user = User.objects.create(user_id=1, email="test@gmail.com", password=bcrypt.hashpw("12345".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))
         self.data1 = {"email": "test@gmail.com", "password": "12345"}
         self.data2 = {"email": "test1@gmail.com", "password": "12345"}
@@ -34,3 +36,17 @@ class LoginTestCase(APITestCase):
         response = self.client.post(self.url, data=self.data4, format='json')
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
         self.assertEqual('wrong_password', response.data['code'])
+
+    def test_logout_success(self):
+        response = self.client.post(self.url, data=self.data1, format='json')
+        token = response.data['token']
+        header = {"HTTP_TOKEN": token}
+        response = self.client.post(self.url2, **header)
+        self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
+        self.assertEqual('logout_complete', response.data['code'])
+
+    def test_logout_token_expire_error(self):
+        header = {"HTTP_TOKEN": ''}
+        response = self.client.post(self.url2, **header)
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual('token_expire', response.data['detail'])

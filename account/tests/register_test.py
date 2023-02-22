@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.views import status
 from django.urls import reverse
-
+from rest_framework.settings import api_settings
 from account.models import User
 
 
@@ -14,10 +14,12 @@ class RegisterTestCase(APITestCase):
         self.data4 = {"email": "test1@gmail.com", "password1": "!Sd1#$@#", "password2": "!Sd1#$@#"}
         self.data5 = {"email": "test2@gmail.com", "password1": "!Sd1#$@#", "password2": ""}
         self.data6 = {"email": "test2@gmail.com", "password1": "!Sd1#$@#", "password2": "!Sd1#$@%"}
-        self.user = User.objects.create(user_id=100, email='test3@gmail.com', password='!Sd1#$@#')
 
 
     def test_register_success(self):
+        client = APIClient()
+        user = User.objects.create(user_id=1, email='test1@gmail.com')
+        client.force_authenticate(user=user)
         response = self.client.post(self.url, data=self.data1, format='json')
         # swagger, curl 로 테스트 했을때는 잘 되지만 user_id 의 default value 가 없다고 나온다. DB에도 PK와 AI 설정을 해뒀지만 안된다.
         # self.assertEqual(status.HTTP_201_CREATED, response.status_code)

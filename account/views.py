@@ -3,14 +3,16 @@ from django.core.validators import validate_email
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_200_OK, HTTP_202_ACCEPTED
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED, HTTP_200_OK, HTTP_202_ACCEPTED, HTTP_403_FORBIDDEN
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from account.models import User, Abook
+from payhere.permissions import UserAuthenticated
 
 from payhere import error_collection
-from tools import make_token
+from tools import make_token, get_id
+
 
 import datetime
 import bcrypt
@@ -35,7 +37,7 @@ import bcrypt
         required=['email', 'password1', 'password2'],
     ),
     responses={
-        HTTP_201_CREATED: '\n\n> **회원가입, 토큰 반환**\n\n```\n{\n\n\t"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0",\n\t"refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0"\n\n}\n\n```',
+        HTTP_201_CREATED: '\n\n> **회원가입, 토큰 반환**\n\n```\n{\n\n\t"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0"\n\n}\n\n```',
         HTTP_400_BAD_REQUEST: error_collection.RAISE_400_EMAIL_MISSING.as_md() +
                               error_collection.RAISE_400_EMAIL_FORMAT_INVALID.as_md() +
                               error_collection.RAISE_400_EMAIL_EXIST.as_md() +
@@ -78,9 +80,9 @@ def register(request):
 
         user.register_date = datetime.datetime.utcnow()
 
-        token = {'token': make_token(user.pk), 'refresh_token': make_token(user.pk, auth='refresh', hours=6)}
+        token = {'token': make_token(user.pk)}
 
-        user.refresh_token = token['refresh_token'].decode()
+        user.refresh_token = make_token(user.pk, auth='refresh', hours=6).decode()
         user.save()
 
         return Response(token, status=HTTP_201_CREATED)
@@ -105,7 +107,7 @@ def register(request):
         required=['email', 'password'],
     ),
     responses={
-        HTTP_202_ACCEPTED: '\n\n> **로그인, 토큰 반환**\n\n```\n{\n\n\t"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0",\n\t"refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0"\n\n}\n\n```',
+        HTTP_202_ACCEPTED: '\n\n> **로그인, 토큰 반환**\n\n```\n{\n\n\t"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoicGF0aWVudCIsImlkIjoxOSwiZXhwIjoxNjMzOTY4MTYxfQ.UqAuOEklo8cxTgJtd8nPJSlFgmcZB5Dvd27YGemrgb0"\n\n}\n\n```',
         HTTP_400_BAD_REQUEST: error_collection.RAISE_400_EMAIL_FORMAT_INVALID.as_md() +
                               error_collection.RAISE_400_WRONG_PASSWORD.as_md() +
                               error_collection.RAISE_400_WRONG_EMAIL.as_md(),
@@ -132,12 +134,33 @@ def login(request):
             if not bcrypt.checkpw(password.encode('utf-8'), db_pass.encode('utf-8')):
                 raise ValueError('wrong_password')
             else:
-                token = {'token': make_token(user.pk), 'refresh_token': make_token(user.pk, auth='refresh', hours=6)}
+                token = {'token': make_token(user.pk)}
 
-                user.refresh_token = token['refresh_token'].decode()
+                user.refresh_token = make_token(user.pk, auth='refresh', hours=6).decode()
                 user.save()
 
                 return Response(token, status=HTTP_202_ACCEPTED)
 
     except Exception as e:
         return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
+
+
+
+@swagger_auto_schema(
+    operation_description='User logout. Expire refresh token.',
+    method='post',
+    responses={
+        HTTP_202_ACCEPTED: '\n\n> **로그아웃, 리프레시 토큰 제거**\n\n```\n{\n\n\t"message": "logout_complete"\n\n}\n\n```',
+        HTTP_403_FORBIDDEN: error_collection.RAISE_403_TOKEN_EXPIRE.as_md()
+    },
+)
+@api_view(['POST'])
+@permission_classes((UserAuthenticated,))
+def logout(request):
+    u_id = get_id(request)
+    user = User.objects.get(user_id=u_id)
+    user.refresh_token = None
+    user.save()
+
+    return Response({"code": "logout_complete"}, status=HTTP_202_ACCEPTED)
+
