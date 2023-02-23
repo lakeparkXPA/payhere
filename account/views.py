@@ -152,7 +152,7 @@ def login(request):
     operation_description='User logout. Expire refresh token.',
     method='post',
     responses={
-        HTTP_202_ACCEPTED: '\n\n> **로그아웃, 리프레시 토큰 제거**\n\n```\n{\n\n\t"message": "logout_complete"\n\n}\n\n```',
+        HTTP_202_ACCEPTED: '\n\n> **로그아웃, 리프레시 토큰 제거**\n\n```\n{\n\n\t"code": "logout_complete"\n\n}\n\n```',
         HTTP_401_UNAUTHORIZED: error_collection.RAISE_401_TOKEN_EXPIRE.as_md()
     },
 )
@@ -352,4 +352,46 @@ def abook_detail(request):
 
     return Response(book_get, status=HTTP_200_OK)
 
-# 6. 가계부의 세부 내역을 복제할 수 있습니다.
+
+@swagger_auto_schema(
+    operation_description='Duplicate given account book detail',
+    method='post',
+    request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'abook_id': openapi.Schema(
+                    type=openapi.TYPE_NUMBER,
+                    description='Account book id'
+                ),
+
+            },
+            required=['abook_id'],
+        ),
+    responses={
+        HTTP_202_ACCEPTED: '\n\n> **받은 가계부 세부내역 복제**\n\n```\n{\n\n\t"message": "detail_duplicated"\n\n}\n\n```',
+        HTTP_401_UNAUTHORIZED: error_collection.RAISE_401_TOKEN_EXPIRE.as_md(),
+        HTTP_400_BAD_REQUEST: error_collection.RAISE_400_WRONG_ABOOK.as_md() +
+                              error_collection.RAISE_400_NO_ABOOK_ID.as_md(),
+    },
+)
+@api_view(['POST'])
+@permission_classes((UserAuthenticated,))
+def abook_detail_duplicate(request):
+    try:
+        a_id = request.data['abook_id']
+    except:
+        return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
+    try:
+        book = Abook.objects.get(abook_id=int(a_id))
+    except:
+        return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+
+    user = User.objects.get(user_id=book.user.user_id)
+    book_dup = Abook(user=user)
+    book_dup.abook_time = datetime.datetime.now(timezone('Asia/Seoul'))
+    book_dup.amount = book.amount
+    book_dup.memo = book.memo
+    book_dup.save()
+
+    return Response({"code": "detail_duplicated"}, status=HTTP_200_OK)
+
