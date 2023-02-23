@@ -12,7 +12,7 @@ from pytz import timezone
 class AbookGetDetailTestCase(APITestCase):
     def setUp(self):
         self.url1 = reverse('detail')
-        self.url2 = reverse('user_login')
+        self.url2 = reverse('login')
         self.user = User.objects.create(email="test@gmail.com",
                                         password=bcrypt.hashpw("12345".encode('utf-8'), bcrypt.gensalt()).decode(
                                             'utf-8'))

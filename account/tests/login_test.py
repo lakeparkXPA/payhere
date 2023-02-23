@@ -8,8 +8,8 @@ import bcrypt
 
 class LoginTestCase(APITestCase):
     def setUp(self):
-        self.url = reverse('user_login')
-        self.url2 = reverse('user_logout')
+        self.url = reverse('login')
+        self.url2 = reverse('logout')
         self.user = User.objects.create(user_id=1, email="test@gmail.com", password=bcrypt.hashpw("12345".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))
         self.data1 = {"email": "test@gmail.com", "password": "12345"}
         self.data2 = {"email": "test1@gmail.com", "password": "12345"}

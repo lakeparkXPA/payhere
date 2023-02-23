@@ -16,3 +16,9 @@ class AbookGetDetail(serializers.ModelSerializer):
         model = Abook
         fields = ('abook_id', 'abook_time', 'amount', 'memo')
 
+
+class AbookShareDetail(serializers.ModelSerializer):
+
+    class Meta:
+        model = Abook
+        fields = ('abook_time', 'amount', 'memo')

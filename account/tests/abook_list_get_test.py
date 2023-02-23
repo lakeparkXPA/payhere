@@ -10,7 +10,7 @@ import bcrypt
 class AbookGetTestCase(APITestCase):
     def setUp(self):
         self.url1 = reverse('book')
-        self.url2 = reverse('user_login')
+        self.url2 = reverse('login')
         self.user1 = User.objects.create(email="test1@gmail.com",
                                          password=bcrypt.hashpw("12345".encode('utf-8'), bcrypt.gensalt()).decode(
                                              'utf-8'))

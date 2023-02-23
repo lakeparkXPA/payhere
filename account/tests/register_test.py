@@ -7,7 +7,7 @@ from account.models import User
 
 class RegisterTestCase(APITestCase):
     def setUp(self):
-        self.url = reverse('user_register')
+        self.url = reverse('register')
         self.data1 = {"email": "test@gmail.com", "password1": "!Sd1#$@#", "password2": "!Sd1#$@#"}
         self.data2 = {"email": "", "password1": "!Sd1#$@#", "password2": "!Sd1#$@#"}
         self.data3 = {"email": "test", "password1": "!Sd1#$@#", "password2": "!Sd1#$@#"}

@@ -81,3 +81,8 @@ RAISE_400_NO_ABOOK_ID = ErrorCollection(
     status=status.HTTP_400_BAD_REQUEST,
     message='abook id가 없습니다.'
 )
+RAISE_400_TIME_EXPIRE = ErrorCollection(
+    code='time_expire',
+    status=status.HTTP_400_BAD_REQUEST,
+    message='abook id가 없습니다.'
+)

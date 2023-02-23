@@ -10,7 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from account.models import User, Abook
-from account.serializers import AbookGet, AbookGetDetail
+from account.serializers import AbookGet, AbookGetDetail, AbookShareDetail
 from payhere.permissions import UserAuthenticated
 from payhere.settings import ALGORITHM, SECRET_KEY
 
@@ -20,6 +20,7 @@ from tools import make_token, get_id
 from pytz import timezone
 import datetime
 import bcrypt
+import pyshorteners
 
 
 @swagger_auto_schema(
@@ -394,4 +395,74 @@ def abook_detail_duplicate(request):
     book_dup.save()
 
     return Response({"code": "detail_duplicated"}, status=HTTP_200_OK)
+
+@swagger_auto_schema(
+    operation_description='Share details of account book.',
+    method='get',
+    manual_parameters=[
+        openapi.Parameter(
+            'aid',
+            openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            description='Abook ID'
+        ),
+    ],
+    responses={
+        HTTP_200_OK: '\n\n> **가계부 세부 내역 (반환 예 하단 참고)**\n\n```\n{\n\t"abook_id": 7,\n\t"amount": 10000,\n\t"memo": "test memo"\n}\n\n```',
+        HTTP_401_UNAUTHORIZED: error_collection.RAISE_401_TOKEN_EXPIRE.as_md(),
+        HTTP_400_BAD_REQUEST: error_collection.RAISE_400_WRONG_ABOOK.as_md() +
+                              error_collection.RAISE_400_NO_ABOOK_ID.as_md(),
+    },
+)
+@api_view(['GET'])
+@permission_classes((UserAuthenticated,))
+def abook_share(request):
+    a_id = request.GET.get('aid')
+
+    if not a_id:
+        return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
+    try:
+        book = Abook.objects.get(abook_id=int(a_id))
+    except:
+        return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+
+    url = 'http://127.0.0.1:8000/account/dshare?aid=' + a_id
+    shortener = pyshorteners.Shortener(timeout=10)
+    shortened_url = shortener.tinyurl.short(url)
+
+    return Response({"url": shortened_url}, status=HTTP_200_OK)
+
+
+@swagger_auto_schema(
+    operation_description='Share details of account book.',
+    method='get',
+    manual_parameters=[
+        openapi.Parameter(
+            'aid',
+            openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            description='Abook ID'
+        ),
+    ],
+    responses={
+        HTTP_200_OK: '\n\n> **공유 가계부 세부 내역 (반환 예 하단 참고)**\n\n```\n{\n\t"amount": 10000,\n\t"memo": "test memo"\n}\n\n```',
+        HTTP_400_BAD_REQUEST: error_collection.RAISE_400_WRONG_ABOOK.as_md() +
+                              error_collection.RAISE_400_NO_ABOOK_ID.as_md(),
+    },
+)
+@api_view(['GET'])
+@permission_classes((permissions.AllowAny,))
+def abook_detail_share(request):
+    a_id = request.GET.get('aid')
+    if not a_id:
+        return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
+    try:
+        book = Abook.objects.get(abook_id=int(a_id))
+    except:
+        return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+
+    book_get = AbookShareDetail(book).data
+
+    return Response(book_get, status=HTTP_200_OK)
+
 
