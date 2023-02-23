@@ -10,7 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from account.models import User, Abook
-from account.serializers import AbookGet
+from account.serializers import AbookGet, AbookGetDetail
 from payhere.permissions import UserAuthenticated
 from payhere.settings import ALGORITHM, SECRET_KEY
 
@@ -316,3 +316,40 @@ class Book(APIView):
             return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
 
         return Response({"code": "abook_deleted"}, status=HTTP_200_OK)
+
+
+@swagger_auto_schema(
+    operation_description='Get details of account book.',
+    method='get',
+    manual_parameters=[
+        openapi.Parameter(
+            'aid',
+            openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            description='Abook ID'
+        ),
+    ],
+    responses={
+        HTTP_200_OK: '\n\n> **가계부 세부 내역 (반환 예 하단 참고)**\n\n```\n{\n\t"abook_id": 7,\n\t"amount": 10000,\n\t"memo": "test memo"\n}\n\n```',
+        HTTP_401_UNAUTHORIZED: error_collection.RAISE_401_TOKEN_EXPIRE.as_md(),
+        HTTP_400_BAD_REQUEST: error_collection.RAISE_400_WRONG_ABOOK.as_md() +
+                              error_collection.RAISE_400_NO_ABOOK_ID.as_md(),
+    },
+)
+@api_view(['GET'])
+@permission_classes((UserAuthenticated,))
+def abook_detail(request):
+    a_id = request.GET.get('aid')
+
+    if not a_id:
+        return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
+    try:
+        book = Abook.objects.get(abook_id=int(a_id))
+    except:
+        return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+
+    book_get = AbookGetDetail(book).data
+
+    return Response(book_get, status=HTTP_200_OK)
+
+# 6. 가계부의 세부 내역을 복제할 수 있습니다.
