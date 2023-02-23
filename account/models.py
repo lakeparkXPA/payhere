@@ -9,11 +9,11 @@ from django.db import models
 
 
 class Abook(models.Model):
-    abook_id = models.IntegerField(primary_key=True)
+    abook_id = models.AutoField(primary_key=True)
     user = models.ForeignKey('User', models.DO_NOTHING)
     abook_time = models.DateTimeField(blank=True, null=True)
     amount = models.IntegerField(blank=True, null=True)
-    about = models.TextField(blank=True, null=True)
+    memo = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -21,7 +21,7 @@ class Abook(models.Model):
 
 
 class User(models.Model):
-    user_id = models.IntegerField(primary_key=True)
+    user_id = models.AutoField(primary_key=True)
     email = models.CharField(max_length=255, blank=True, null=True)
     password = models.CharField(max_length=255, blank=True, null=True)
     refresh_token = models.CharField(max_length=255, blank=True, null=True)

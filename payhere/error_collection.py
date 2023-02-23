@@ -51,8 +51,33 @@ RAISE_400_WRONG_EMAIL = ErrorCollection(
     status=status.HTTP_400_BAD_REQUEST,
     message='이메일이 틀렸습니다.'
 )
-RAISE_403_TOKEN_EXPIRE = ErrorCollection(
+RAISE_401_TOKEN_EXPIRE = ErrorCollection(
     code='token_expire',
-    status=status.HTTP_403_FORBIDDEN,
+    status=status.HTTP_401_UNAUTHORIZED,
     message='토큰이 만료됐습니다.'
+)
+RAISE_400_NO_ABOOK = ErrorCollection(
+    code='no_abook',
+    status=status.HTTP_400_BAD_REQUEST,
+    message='기록이 없습니다.'
+)
+RAISE_400_NO_AMOUNT = ErrorCollection(
+    code='no_amount',
+    status=status.HTTP_400_BAD_REQUEST,
+    message='금액이 없습니다.'
+)
+RAISE_400_AMOUNT_NUMERIC = ErrorCollection(
+    code='amount_numeric',
+    status=status.HTTP_400_BAD_REQUEST,
+    message='금액은 숫자형이어야 합니다.'
+)
+RAISE_400_WRONG_ABOOK = ErrorCollection(
+    code='wrong_abook',
+    status=status.HTTP_400_BAD_REQUEST,
+    message='abook id가 올바르지 않습니다.'
+)
+RAISE_400_NO_ABOOK_ID = ErrorCollection(
+    code='no_abook_id',
+    status=status.HTTP_400_BAD_REQUEST,
+    message='abook id가 없습니다.'
 )

@@ -21,8 +21,7 @@ class RegisterTestCase(APITestCase):
         user = User.objects.create(user_id=1, email='test1@gmail.com')
         client.force_authenticate(user=user)
         response = self.client.post(self.url, data=self.data1, format='json')
-        # swagger, curl 로 테스트 했을때는 잘 되지만 user_id 의 default value 가 없다고 나온다. DB에도 PK와 AI 설정을 해뒀지만 안된다.
-        # self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
 
     def test_register_email_missing_error(self):
         response = self.client.post(self.url, data=self.data2, format='json')
