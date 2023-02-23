@@ -212,27 +212,29 @@ class Book(APIView):
     )
     def post(self, request):
         u_id = get_id(request)
-
         try:
-            amount = request.data['amount']
-        except:
-            return Response({"code": "no_amount"}, status=HTTP_400_BAD_REQUEST)
-        if not amount:
-            return Response({"code": "no_amount"}, status=HTTP_400_BAD_REQUEST)
-        if type(amount) != int:
-            return Response({"code": "amount_numeric"}, status=HTTP_400_BAD_REQUEST)
-        user = User.objects.get(user_id=u_id)
-        book = Abook(user=user)
-        book.abook_time = datetime.datetime.now(timezone('Asia/Seoul'))
-        book.amount = amount
-        try:
-            memo = request.data['memo']
-            book.memo = memo
-        except:
-            pass
-        book.save()
+            try:
+                amount = request.data['amount']
+            except:
+                raise ValueError('no_amount')
+            if not amount:
+                raise ValueError('no_amount')
+            if type(amount) != int:
+                raise ValueError('no_amount')
+            user = User.objects.get(user_id=u_id)
+            book = Abook(user=user)
+            book.abook_time = datetime.datetime.now(timezone('Asia/Seoul'))
+            book.amount = amount
+            try:
+                memo = request.data['memo']
+                book.memo = memo
+            except:
+                pass
+            book.save()
 
-        return Response({"code": "book_saved"}, status=HTTP_201_CREATED)
+            return Response({"code": "book_saved"}, status=HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_description='Save fixed data.',
@@ -263,28 +265,31 @@ class Book(APIView):
     )
     def put(self, request):
         try:
-            abook_id = request.data['abook_id']
-        except:
-            return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
-        try:
-            book = Abook.objects.get(abook_id=abook_id)
-        except:
-            return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
-        try:
-            amount = request.data['amount']
-            if amount:
-                book.amount = amount
+            try:
+                abook_id = request.data['abook_id']
+            except:
+                raise ValueError('no_amount')
+            try:
+                book = Abook.objects.get(abook_id=abook_id)
+            except:
+                raise ValueError('no_amount')
+            try:
+                amount = request.data['amount']
+                if amount:
+                    book.amount = amount
 
-        except:
-            pass
-        try:
-            memo = request.data['memo']
-            book.memo = memo
-        except:
-            pass
-        book.save()
+            except:
+                pass
+            try:
+                memo = request.data['memo']
+                book.memo = memo
+            except:
+                pass
+            book.save()
 
-        return Response({"code": "abook_updated"}, status=HTTP_200_OK)
+            return Response({"code": "abook_updated"}, status=HTTP_200_OK)
+        except Exception as e:
+            return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_description='Save fixed data.',
@@ -307,16 +312,19 @@ class Book(APIView):
     )
     def delete(self, request):
         try:
-            abook_id = request.data['abook_id']
-        except:
-            return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
-        try:
-            book = Abook.objects.get(abook_id=abook_id)
-            book.delete()
-        except:
-            return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+            try:
+                abook_id = request.data['abook_id']
+            except:
+                raise ValueError('no_amount')
+            try:
+                book = Abook.objects.get(abook_id=abook_id)
+                book.delete()
+            except:
+                raise ValueError('no_amount')
 
-        return Response({"code": "abook_deleted"}, status=HTTP_200_OK)
+            return Response({"code": "abook_deleted"}, status=HTTP_200_OK)
+        except Exception as e:
+            return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(
@@ -341,17 +349,19 @@ class Book(APIView):
 @permission_classes((UserAuthenticated,))
 def abook_detail(request):
     a_id = request.GET.get('aid')
-
-    if not a_id:
-        return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
     try:
-        book = Abook.objects.get(abook_id=int(a_id))
-    except:
-        return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+        if not a_id:
+            raise ValueError('no_amount')
+        try:
+            book = Abook.objects.get(abook_id=int(a_id))
+        except:
+            raise ValueError('no_amount')
 
-    book_get = AbookGetDetail(book).data
+        book_get = AbookGetDetail(book).data
 
-    return Response(book_get, status=HTTP_200_OK)
+        return Response(book_get, status=HTTP_200_OK)
+    except Exception as e:
+        return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(
@@ -379,22 +389,25 @@ def abook_detail(request):
 @permission_classes((UserAuthenticated,))
 def abook_detail_duplicate(request):
     try:
-        a_id = request.data['abook_id']
-    except:
-        return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
-    try:
-        book = Abook.objects.get(abook_id=int(a_id))
-    except:
-        return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+        try:
+            a_id = request.data['abook_id']
+        except:
+            raise ValueError('no_amount')
+        try:
+            book = Abook.objects.get(abook_id=int(a_id))
+        except:
+            raise ValueError('no_amount')
 
-    user = User.objects.get(user_id=book.user.user_id)
-    book_dup = Abook(user=user)
-    book_dup.abook_time = datetime.datetime.now(timezone('Asia/Seoul'))
-    book_dup.amount = book.amount
-    book_dup.memo = book.memo
-    book_dup.save()
+        user = User.objects.get(user_id=book.user.user_id)
+        book_dup = Abook(user=user)
+        book_dup.abook_time = datetime.datetime.now(timezone('Asia/Seoul'))
+        book_dup.amount = book.amount
+        book_dup.memo = book.memo
+        book_dup.save()
 
-    return Response({"code": "detail_duplicated"}, status=HTTP_200_OK)
+        return Response({"code": "detail_duplicated"}, status=HTTP_200_OK)
+    except Exception as e:
+        return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
     operation_description='Share details of account book.',
@@ -418,19 +431,21 @@ def abook_detail_duplicate(request):
 @permission_classes((UserAuthenticated,))
 def abook_share(request):
     a_id = request.GET.get('aid')
-
-    if not a_id:
-        return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
     try:
-        book = Abook.objects.get(abook_id=int(a_id))
-    except:
-        return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+        if not a_id:
+            raise ValueError('no_amount')
+        try:
+            book = Abook.objects.get(abook_id=int(a_id))
+        except:
+            raise ValueError('no_amount')
 
-    url = 'http://127.0.0.1:8000/account/dshare?aid=' + a_id
-    shortener = pyshorteners.Shortener(timeout=10)
-    shortened_url = shortener.tinyurl.short(url)
+        url = 'http://127.0.0.1:8000/account/dshare?aid=' + a_id
+        shortener = pyshorteners.Shortener(timeout=10)
+        shortened_url = shortener.tinyurl.short(url)
 
-    return Response({"url": shortened_url}, status=HTTP_200_OK)
+        return Response({"url": shortened_url}, status=HTTP_200_OK)
+    except Exception as e:
+        return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(
@@ -454,15 +469,18 @@ def abook_share(request):
 @permission_classes((permissions.AllowAny,))
 def abook_detail_share(request):
     a_id = request.GET.get('aid')
-    if not a_id:
-        return Response({"code": "no_abook_id"}, status=HTTP_400_BAD_REQUEST)
     try:
-        book = Abook.objects.get(abook_id=int(a_id))
-    except:
-        return Response({"code": "wrong_abook"}, status=HTTP_400_BAD_REQUEST)
+        if not a_id:
+            raise ValueError('no_amount')
+        try:
+            book = Abook.objects.get(abook_id=int(a_id))
+        except:
+            raise ValueError('no_amount')
 
-    book_get = AbookShareDetail(book).data
+        book_get = AbookShareDetail(book).data
 
-    return Response(book_get, status=HTTP_200_OK)
+        return Response(book_get, status=HTTP_200_OK)
+    except Exception as e:
+        return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
 
 
