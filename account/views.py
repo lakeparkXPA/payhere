@@ -476,7 +476,7 @@ def abook_detail_duplicate(request):
         ),
     ],
     responses={
-        HTTP_200_OK: '\n\n> **가계부 세부 내역 (반환 예 하단 참고)**\n\n```\n{\n\t"abook_id": 7,\n\t"amount": 10000,\n\t"memo": "test memo"\n}\n\n```',
+        HTTP_200_OK: '\n\n> **공유 url (반환 예 하단 참고)**\n\n```\n{\n\t"url": "https://tinyurl.com/2z6bjg2q"\n}\n\n```',
         HTTP_403_FORBIDDEN: error_collection.RAISE_403_TOKEN_EXPIRE.as_md(),
         HTTP_400_BAD_REQUEST: error_collection.RAISE_400_WRONG_ABOOK.as_md() +
                               error_collection.RAISE_400_NO_ABOOK_ID.as_md(),
@@ -488,13 +488,13 @@ def abook_share(request):
     a_id = request.GET.get('aid')
     try:
         if not a_id:
-            raise ValueError('no_amount')
+            raise ValueError('no_abook_id')
         try:
             book = Abook.objects.get(abook_id=int(a_id))
         except:
-            raise ValueError('no_amount')
+            raise ValueError('wrong_abook')
 
-        url = 'http://127.0.0.1:8000/account/dshare?aid=' + a_id
+        url = 'http://127.0.0.1:8000/account/dshare?amount=' + str(book.amount) + '&memo=' + book.memo
         shortener = pyshorteners.Shortener(timeout=10)
         shortened_url = shortener.tinyurl.short(url)
         return Response({"url": shortened_url}, status=HTTP_200_OK)
@@ -515,24 +515,12 @@ def abook_share(request):
     ],
     responses={
         HTTP_200_OK: '\n\n> **공유 가계부 세부 내역 (반환 예 하단 참고)**\n\n```\n{\n\t"amount": 10000,\n\t"memo": "test memo"\n}\n\n```',
-        HTTP_400_BAD_REQUEST: error_collection.RAISE_400_WRONG_ABOOK.as_md() +
-                              error_collection.RAISE_400_NO_ABOOK_ID.as_md(),
     },
 )
 @api_view(['GET'])
 @permission_classes((permissions.AllowAny,))
 def abook_detail_share(request):
-    a_id = request.GET.get('aid')
-    try:
-        if not a_id:
-            raise ValueError('no_amount')
-        try:
-            book = Abook.objects.get(abook_id=int(a_id))
-        except:
-            raise ValueError('no_amount')
+    amount = request.GET.get('amount')
+    memo = request.GET.get('memo')
 
-        book_get = AbookShareDetail(book).data
-
-        return Response(book_get, status=HTTP_200_OK)
-    except Exception as e:
-        return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
+    return Response({"amount": amount, "memo": memo}, status=HTTP_200_OK)

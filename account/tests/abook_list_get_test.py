@@ -1,6 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.views import status
+
 from django.urls import reverse
+
+from http.cookies import SimpleCookie
 
 from account.models import User, Abook
 
@@ -25,10 +28,12 @@ class AbookGetTestCase(APITestCase):
 
     def test_abook_get_success(self):
         response = self.client.post(self.url2, data=self.data1, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.get(self.url1, **header)
-        print(response.data)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
     def test_no_token_error(self):

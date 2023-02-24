@@ -17,7 +17,7 @@ class UserAuthenticated(permissions.BasePermission):
                 decoded_token = jwt.decode(token, SECRET_KEY, ALGORITHM)
             except:
                 raise exceptions.AuthenticationFailed('token_expire')
-            refresh_token = User.objects.get(user_id=decoded_token['id']).refresh_token
+            refresh_token = request.COOKIES.get('refreshtoken')
             if not refresh_token:
                 raise exceptions.AuthenticationFailed('token_expire')
             if decoded_token['auth'] == 'user':

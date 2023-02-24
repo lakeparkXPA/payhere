@@ -1,6 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.views import status
+
 from django.urls import reverse
+
+from http.cookies import SimpleCookie
 
 from account.models import User, Abook
 
@@ -26,8 +29,11 @@ class AbookDetailDuplicateTestCase(APITestCase):
 
     def test_abook_detail_duplicate_success(self):
         response = self.client.post(self.url2, data=self.data4, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.post(self.url1, data=self.data1, format='json', **header)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
@@ -38,15 +44,21 @@ class AbookDetailDuplicateTestCase(APITestCase):
 
     def test_no_id_error(self):
         response = self.client.post(self.url2, data=self.data4, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.post(self.url1, data=self.data2, format='json', **header)
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_wrong_id_error(self):
         response = self.client.post(self.url2, data=self.data4, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.post(self.url1, data=self.data3, format='json', **header)
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 

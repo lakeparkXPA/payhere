@@ -1,6 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.views import status
+
 from django.urls import reverse
+
+from http.cookies import SimpleCookie
 
 from account.models import User, Abook
 
@@ -24,8 +27,11 @@ class AbookGetDetailTestCase(APITestCase):
 
     def test_abook_get_detail_success(self):
         response = self.client.post(self.url2, data=self.data, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.get(self.url1 + '?aid=1', **header)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
@@ -36,14 +42,20 @@ class AbookGetDetailTestCase(APITestCase):
 
     def test_no_id_error(self):
         response = self.client.post(self.url2, data=self.data, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.get(self.url1, **header)
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_wrong_id_error(self):
         response = self.client.post(self.url2, data=self.data, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.get(self.url1 + '?aid=100', **header)
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)

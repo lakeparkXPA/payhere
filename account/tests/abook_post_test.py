@@ -1,6 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.views import status
+
 from django.urls import reverse
+
+from http.cookies import SimpleCookie
 
 from account.models import User, Abook
 
@@ -20,8 +23,11 @@ class AbookPostTestCase(APITestCase):
 
     def test_abook_post_success(self):
         response = self.client.post(self.url2, data=self.data3, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.post(self.url1, data=self.data1, format='json', **header)
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
 
@@ -33,7 +39,10 @@ class AbookPostTestCase(APITestCase):
 
     def test_no_amount_error(self):
         response = self.client.post(self.url2, data=self.data3, format='json')
+
         token = response.data['token']
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.post(self.url1, data=self.data2, format='json', **header)
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
