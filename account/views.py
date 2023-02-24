@@ -13,7 +13,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from account.models import User, Abook
-from account.serializers import AbookGet, AbookGetDetail, AbookShareDetail
+from account.serializers import AbookGet, AbookGetDetail
 
 from payhere.permissions import UserAuthenticated
 from payhere.settings import ALGORITHM, SECRET_KEY
