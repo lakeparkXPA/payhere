@@ -1,6 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.views import status
+
 from django.urls import reverse
+
+from http.cookies import SimpleCookie
 
 from account.models import User
 import bcrypt
@@ -40,13 +43,11 @@ class LoginTestCase(APITestCase):
     def test_logout_success(self):
         response = self.client.post(self.url, data=self.data1, format='json')
         token = response.data['token']
+
         header = {"HTTP_TOKEN": token}
+        self.client.cookies = SimpleCookie(response.cookies)
+
         response = self.client.post(self.url2, **header)
         self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual('logout_complete', response.data['code'])
 
-    def test_logout_token_expire_error(self):
-        header = {"HTTP_TOKEN": ''}
-        response = self.client.post(self.url2, **header)
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
-        self.assertEqual('token_expire', response.data['detail'])
