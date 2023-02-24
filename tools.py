@@ -10,7 +10,6 @@ def make_token(token_id, auth='user', hours=1):
     payload['auth'] = auth
     payload['id'] = token_id
     payload['exp'] = datetime.datetime.now(timezone('Asia/Seoul')) + datetime.timedelta(hours=hours)
-    #token_refresh 에서 hour 대신 seconds 사용
     return jwt.encode(payload, SECRET_KEY, ALGORITHM)
 
 

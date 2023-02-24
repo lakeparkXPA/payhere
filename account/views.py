@@ -229,7 +229,7 @@ class Book(APIView):
     @swagger_auto_schema(
         operation_description='Get abook list data.',
         responses={
-            HTTP_200_OK: '\n\n> **기록 목록 반환 (반환 예 하단 참고)**\n\n```\n[\n\t{\n\t\t"abook_id": 1,\n\t\t"abook_time": "2023-01-01 10:08:00",\n\t\t"amount": 120000\n\t},\n\t{\n\t\t"abook_id": 1,\n\t\t"abook_time": "2023-01-01 10:08:00",\n\t\t"amount": 120000\n\t},\n...\n```',
+            HTTP_200_OK: '\n\n> **기록 목록 반환 (반환 예 하단 참고)**\n\n```\n[\n\t{\n\t\t"abook_id": 1,\n\t\t"abook_time": "2023-01-01 10:08:00",\n\t\t"amount": 120000\n\t},\n\t{\n\t\t"abook_id": 1,\n\t\t"abook_time": "2023-01-01 10:08:00",\n\t\t"amount": 120000\n\t},\n...\\n```',
             HTTP_403_FORBIDDEN: error_collection.RAISE_403_TOKEN_EXPIRE.as_md(),
         },
     )
@@ -497,7 +497,6 @@ def abook_share(request):
         url = 'http://127.0.0.1:8000/account/dshare?aid=' + a_id
         shortener = pyshorteners.Shortener(timeout=10)
         shortened_url = shortener.tinyurl.short(url)
-
         return Response({"url": shortened_url}, status=HTTP_200_OK)
     except Exception as e:
         return Response({"code": str(e)}, status=HTTP_400_BAD_REQUEST)
